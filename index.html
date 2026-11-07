@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base href="/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="Aurora Music Player">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Aurora Music">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>Aurora Music Player</title>
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    body {
+      background-color: #0f172a;
+      margin: 0;
+      padding: 0;
+    }
+
+    #loading-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #020617, #111827 45%, #1e1b4b);
+      color: #a78bfa;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      z-index: 99999;
+      transition: opacity 0.35s ease-out;
+      pointer-events: none;
+    }
+
+    .loader {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #1f2937;
+      border-top: 4px solid #8b5cf6;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin-bottom: 18px;
+      box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .status-text {
+      font-size: 15px;
+      color: #9ca3af;
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading-container">
+    <div class="loader"></div>
+    <div class="status-text">Starting Aurora Music...</div>
+  </div>
+
+  <script src="flutter_bootstrap.js" async></script>
+  <script>
+    function dismissLoadingScreen() {
+      var loader = document.getElementById('loading-container');
+      if (loader && loader.style.display !== 'none') {
+        loader.style.opacity = '0';
+        setTimeout(function() {
+          if (loader.parentNode) loader.parentNode.removeChild(loader);
+        }, 350);
+      }
+    }
+
+    // Check if opened via file:// protocol
+    if (window.location.protocol === 'file:') {
+      var loader = document.getElementById('loading-container');
+      if (loader) {
+        loader.innerHTML = `
+          <div style="max-width: 460px; text-align: center; padding: 28px 24px; background: rgba(17, 24, 39, 0.95); border: 1px solid rgba(167, 139, 250, 0.3); border-radius: 18px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+            <div style="font-size: 36px; margin-bottom: 12px;">🎵</div>
+            <div style="font-size: 19px; font-weight: bold; color: #f1f5f9; margin-bottom: 10px;">Aurora Music Player</div>
+            <div style="font-size: 13.5px; color: #94a3b8; line-height: 1.6; margin-bottom: 18px;">
+              Web browsers block Flutter Web from opening directly through <code>file:///</code> due to security rules.<br><br>
+              <strong>To launch Aurora Music:</strong><br>
+              Run <code>start_player.bat</code> or run <code>python -m http.server 8000</code> in your terminal and open <code>http://localhost:8000</code>.
+            </div>
+            <div style="font-size: 12px; color: #a78bfa; font-weight: 500;">
+              ✨ Ready to stream from GitHub & local storage
+            </div>
+          </div>
+        `;
+      }
+    } else {
+      // Check for canvas rendering or flutter-view ready
+      function checkFlutterReady() {
+        var canvas = document.querySelector('flutter-view canvas') || document.querySelector('canvas');
+        if (canvas && canvas.width > 0 && canvas.height > 0) {
+          setTimeout(dismissLoadingScreen, 300);
+          return true;
+        }
+        return false;
+      }
+
+      var checkInterval = setInterval(function() {
+        if (checkFlutterReady()) {
+          clearInterval(checkInterval);
+        }
+      }, 100);
+
+      // Legacy event fallback
+      window.addEventListener('flutter-first-frame', function() {
+        clearInterval(checkInterval);
+        dismissLoadingScreen();
+      });
+
+      // Safety fallback: guaranteed dismiss within 6 seconds
+      setTimeout(function() {
+        clearInterval(checkInterval);
+        dismissLoadingScreen();
+      }, 6000);
+    }
+  </script>
+</body>
+</html>
